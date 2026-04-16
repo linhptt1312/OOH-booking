@@ -651,8 +651,8 @@
 // ══════════════════════════════════════════
 // CONFIG — điền Project URL và anon key vào đây
 // ══════════════════════════════════════════
-const SUPABASE_URL = 'SUPABASE_URL_HERE';
-const SUPABASE_KEY = 'SUPABASE_KEY_HERE';
+const SUPABASE_URL = 'https://lpeabogkmdmxfuskliyt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_TOBk2QAI1yuxzTThIq3RxQ_wVixvLhq';
 
 // ══ Supabase client (vanilla JS, không cần npm) ══
 const sb = {
