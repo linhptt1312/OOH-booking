@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OOH Booking Manager</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #F7F6F3;
+    --surface: #FFFFFF;
+    --border: #E8E6E1;
+    --border-strong: #D0CEC8;
+    --text: #1A1916;
+    --text-2: #6B6860;
+    --text-3: #9B9890;
+    --blue: #1C6EF2;
+    --blue-bg: #EEF4FF;
+    --blue-text: #1244A8;
+    --green: #12A05C;
+    --green-bg: #EDFAF3;
+    --green-text: #0A6B3D;
+    --amber: #D97706;
+    --amber-bg: #FFFBEB;
+    --amber-text: #92400E;
+    --red: #DC2626;
+    --red-bg: #FEF2F2;
+    --red-text: #991B1B;
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Be Vietnam Pro', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+  }
+
+  .auth-logo {
+    width: 40px; height: 40px;
+    background: var(--blue);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .auth-logo svg { width: 22px; height: 22px; fill: #fff; }
+
+  .auth-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .auth-sub { font-size: 13px; color: var(--text-2); margin-bottom: 28px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 5px; }
+
+  .form-group input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+    transition: border-color .15s, box-shadow .15s;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(28,110,242,.1);
+    background: var(--surface);
+  }
+
+  .btn-login {
+    width: 100%;
+    padding: 11px;
+    background: var(--blue);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    margin-top: 4px;
+    transition: background .15s;
+  }
+  .btn-login:hover { background: #1554CC; }
+  .btn-login:disabled { background: var(--border-strong); cursor: not-allowed; }
+
+  .auth-error {
+    background: var(--red-bg);
+    color: var(--red-text);
+    border: 1px solid #FECACA;
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 13px;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  /* ── APP SHELL ── */
+  #app-screen { display: none; min-height: 100vh; }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0; z-index: 50;
+  }
+
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+
+  .topbar-logo {
+    width: 28px; height: 28px;
+    background: var(--blue);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .topbar-logo svg { width: 15px; height: 15px; fill: #fff; }
+
+  .topbar-title { font-size: 14px; font-weight: 600; }
+  .topbar-sep { width: 1px; height: 18px; background: var(--border-strong); }
+
+  .role-badge {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+  .role-badge.admin { background: var(--blue-bg); color: var(--blue-text); }
+  .role-badge.vendor { background: var(--green-bg); color: var(--green-text); }
+
+  .topbar-right { display: flex; align-items: center; gap: 10px; }
+  .user-name { font-size: 13px; color: var(--text-2); }
+
+  .btn-logout {
+    padding: 5px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: background .12s;
+  }
+  .btn-logout:hover { background: var(--bg); }
+
+  /* ── MAIN CONTENT ── */
+  .main { padding: 20px 24px; max-width: 1400px; }
+
+  /* stats */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+
+  .stat-num { font-size: 26px; font-weight: 600; line-height: 1; margin-bottom: 4px; }
+  .stat-lbl { font-size: 12px; color: var(--text-2); }
+
+  /* card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 12px;
+  }
+
+  /* upload zone */
+  .upload-zone {
+    border: 1.5px dashed var(--border-strong);
+    border-radius: var(--radius);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+  }
+  .upload-zone:hover { background: var(--bg); border-color: var(--blue); }
+  .upload-zone input { display: none; }
+
+  .upload-icon {
+    width: 36px; height: 36px;
+    background: var(--blue-bg);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 8px;
+  }
+
+  .upload-icon svg { width: 18px; height: 18px; stroke: var(--blue); }
+
+  /* buttons */
+  .btn {
+    padding: 7px 14px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+    transition: background .12s;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .btn:hover { background: var(--bg); }
+  .btn-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .btn-primary:hover { background: #1554CC; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-danger { color: var(--red); border-color: #FECACA; }
+  .btn-danger:hover { background: var(--red-bg); }
+
+  /* filters */
+  .filter-row {
+    display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+    margin-bottom: 12px;
+  }
+
+  .filter-row select,
+  .filter-row input[type=month],
+  .filter-row input[type=text] {
+    padding: 6px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text);
+  }
+
+  .filter-row select:focus,
+  .filter-row input:focus {
+    outline: none;
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(28,110,242,.08);
+  }
+
+  /* table */
+  .tbl-wrap { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th {
+    background: var(--bg);
+    padding: 8px 10px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--text-2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #FAFAF9; }
+
+  /* badges */
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .badge-gray { background: #F1F0EC; color: var(--text-2); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber-text); border: 1px solid #FDE68A; }
+  .badge-green { background: var(--green-bg); color: var(--green-text); border: 1px solid #A7F3D0; }
+
+  /* status select */
+  .status-select {
+    padding: 4px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-family: inherit;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  /* thumb */
+  .img-thumb {
+    width: 64px; height: 44px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .img-placeholder {
+    width: 64px; height: 44px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    color: var(--text-3);
+  }
+
+  /* modal */
+  .modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.4);
+    z-index: 100;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 18px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .form-group-m label { font-size: 12px; color: var(--text-2); display: block; margin-bottom: 4px; font-weight: 500; }
+  .form-group-m input,
+  .form-group-m select,
+  .form-group-m textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: inherit;
+    background: var(--bg);
+    color: var(--text);
+  }
+  .form-group-m input:focus,
+  .form-group-m select:focus,
+  .form-group-m textarea:focus {
+    outline: none;
+    border-color: var(--blue);
+    background: var(--surface);
+  }
+  .modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  /* empty */
+  .empty { text-align: center; padding: 40px; color: var(--text-3); font-size: 13px; }
+
+  /* alert */
+  .alert {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: 12px;
+    display: none;
+  }
+  .alert.show { display: block; }
+  .alert-success { background: var(--green-bg); color: var(--green-text); border: 1px solid #A7F3D0; }
+  .alert-error { background: var(--red-bg); color: var(--red-text); border: 1px solid #FECACA; }
+  .alert-info { background: var(--blue-bg); color: var(--blue-text); border: 1px solid #BFDBFE; }
+
+  /* vendor screen */
+  .vendor-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+  }
+  .vendor-card-header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+  .vendor-card-title { font-size: 14px; font-weight: 500; }
+  .vendor-card-sub { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+  .img-upload-label {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 5px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    cursor: pointer;
+    background: var(--bg);
+    transition: background .12s;
+  }
+  .img-upload-label:hover { background: var(--border); }
+  .img-upload-label input { display: none; }
+
+  .img-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; align-items: center; }
+
+  .img-del-wrap { position: relative; display: inline-block; }
+  .img-del {
+    position: absolute; top: -5px; right: -5px;
+    width: 16px; height: 16px;
+    background: var(--red);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+  }
+
+  /* loading */
+  .loading-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(255,255,255,.7);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* img modal */
+  .img-modal {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.8);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+  }
+  .img-modal.open { display: flex; }
+  .img-modal img { max-width: 90vw; max-height: 85vh; border-radius: 8px; }
+
+  @media (max-width: 640px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .form-row { grid-template-columns: 1fr; }
+    .topbar { padding: 0 14px; }
+    .main { padding: 14px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading"><div class="spinner"></div></div>
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <svg viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2" opacity=".6"/><rect x="2" y="13" width="9" height="9" rx="2" opacity=".6"/><rect x="13" y="13" width="9" height="9" rx="2" opacity=".3"/></svg>
+    </div>
+    <div class="auth-title">OOH Booking Manager</div>
+    <div class="auth-sub">Đăng nhập để tiếp tục</div>
+    <div class="auth-error" id="auth-error"></div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="email@company.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label>Mật khẩu</label>
+      <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-login" id="btn-login" onclick="doLogin()">Đăng nhập</button>
+  </div>
+</div>
+
+<!-- APP SCREEN -->
+<div id="app-screen">
+  <!-- Topbar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">
+        <svg viewBox="0 0 24 24"><rect x="2" y="2" width="9" height="9" rx="2"/><rect x="13" y="2" width="9" height="9" rx="2" opacity=".6"/><rect x="2" y="13" width="9" height="9" rx="2" opacity=".6"/><rect x="13" y="13" width="9" height="9" rx="2" opacity=".3"/></svg>
+      </div>
+      <div class="topbar-title">OOH Booking</div>
+      <div class="topbar-sep"></div>
+      <span class="role-badge" id="role-badge"></span>
+    </div>
+    <div class="topbar-right">
+      <span class="user-name" id="user-name-lbl"></span>
+      <button class="btn-logout" onclick="doLogout()">Đăng xuất</button>
+    </div>
+  </div>
+
+  <!-- ADMIN VIEW -->
+  <div id="admin-view" class="main" style="display:none">
+    <div id="alert-area"></div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num" id="s-total">0</div><div class="stat-lbl">Tổng hạng mục</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--amber)" id="s-chua">0</div><div class="stat-lbl">Chưa book</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--blue)" id="s-book">0</div><div class="stat-lbl">Đã book / chờ go-live</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--green)" id="s-live">0</div><div class="stat-lbl">Đã go-live</div></div>
+    </div>
+
+    <!-- Upload -->
+    <div class="card">
+      <div class="card-title">Tải lên dữ liệu booking</div>
+      <div class="upload-zone" onclick="document.getElementById('excel-input').click()">
+        <input type="file" id="excel-input" accept=".xlsx,.xls,.csv" onchange="handleUpload(event)">
+        <div class="upload-icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+        </div>
+        <div style="font-size:13px;font-weight:500">Kéo thả hoặc nhấn để chọn file Excel / CSV</div>
+        <div style="font-size:12px;color:var(--text-3);margin-top:3px">Hỗ trợ .xlsx, .xls, .csv</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="openAddModal()">+ Thêm hạng mục</button>
+        <button class="btn btn-sm" onclick="exportCSV()">Xuất CSV</button>
+        <span style="font-size:12px;color:var(--text-3);align-self:center" id="upload-lbl"></span>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card">
+      <div class="filter-row">
+        <input type="month" id="f-month" onchange="renderAdminTable()">
+        <select id="f-status" onchange="renderAdminTable()">
+          <option value="">Tất cả trạng thái</option>
+          <option>Chưa book</option>
+          <option>Đã book, chờ go-live</option>
+          <option>Đã go-live</option>
+        </select>
+        <select id="f-vendor" onchange="renderAdminTable()">
+          <option value="">Tất cả nhà cung cấp</option>
+        </select>
+        <input type="text" id="f-search" placeholder="Tìm kiếm..." oninput="renderAdminTable()" style="width:160px">
+        <button class="btn btn-sm" onclick="clearFilters()">Xoá lọc</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>STT</th><th>Tháng</th><th>Phụ trách</th><th>Hạng mục</th><th>Nhà cung cấp</th><th>Vị trí</th><th>Trạng thái</th><th>Ảnh NTC</th><th>Ghi chú</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="admin-empty" style="display:none">Chưa có dữ liệu. Tải file Excel hoặc thêm thủ công.</div>
+    </div>
+  </div>
+
+  <!-- VENDOR VIEW -->
+  <div id="vendor-view" class="main" style="display:none">
+    <div id="vendor-alert"></div>
+    <div class="card">
+      <div class="card-title">Hạng mục của bạn</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <input type="month" id="vf-month" onchange="renderVendorView()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-family:inherit">
+        <select id="vf-status" onchange="renderVendorView()" style="padding:6px 10px;border:1px solid var(--border-strong);border-radius:var(--radius-sm);font-size:13px;font-family:inherit">
+          <option value="">Tất cả trạng thái</option>
+          <option>Chưa book</option>
+          <option>Đã book, chờ go-live</option>
+          <option>Đã go-live</option>
+        </select>
+      </div>
+      <div id="vendor-items"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">Thêm hạng mục booking</div>
+    <div class="form-row">
+      <div class="form-group-m"><label>Tháng</label><input type="month" id="f-thang"></div>
+      <div class="form-group-m"><label>Người phụ trách</label><input type="text" id="f-phutrach" placeholder="Họ tên"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-m"><label>Tên hạng mục</label><input type="text" id="f-hangmuc" placeholder="Tên hạng mục booking"></div>
+      <div class="form-group-m"><label>Nhà cung cấp</label><input type="text" id="f-ncc" placeholder="Tên nhà cung cấp"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group-m"><label>Vị trí</label><input type="text" id="f-vitri" placeholder="Địa điểm, toà nhà..."></div>
+      <div class="form-group-m"><label>Trạng thái</label>
+        <select id="f-trangthai">
+          <option>Chưa book</option>
+          <option>Đã book, chờ go-live</option>
+          <option>Đã go-live</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group-m" style="margin-bottom:0"><label>Ghi chú</label><textarea id="f-ghichu" rows="2" placeholder="Ghi chú thêm..."></textarea></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Huỷ</button>
+      <button class="btn btn-primary" onclick="saveItem()">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMAGE VIEWER -->
+<div class="img-modal" id="img-modal" onclick="this.classList.remove('open')">
+  <img id="img-modal-src" src="">
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// CONFIG — điền Project URL và anon key vào đây
+// ══════════════════════════════════════════
+const SUPABASE_URL = 'SUPABASE_URL_HERE';
+const SUPABASE_KEY = 'SUPABASE_KEY_HERE';
+
+// ══ Supabase client (vanilla JS, không cần npm) ══
+const sb = {
+  async req(method, path, body) {
+    const r = await fetch(SUPABASE_URL + path, {
+      method,
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + (sbSession?.access_token || SUPABASE_KEY),
+        'Content-Type': 'application/json',
+        'Prefer': method === 'POST' ? 'return=representation' : '',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.message || data.error_description || 'Lỗi API');
+    return data;
+  },
+  async signIn(email, password) {
+    const r = await fetch(SUPABASE_URL + '/auth/v1/token?grant_type=password', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error_description || 'Email hoặc mật khẩu không đúng');
+    return data;
+  },
+  async signOut() {
+    await fetch(SUPABASE_URL + '/auth/v1/logout', {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + sbSession?.access_token },
+    });
+  },
+  async getProfile(uid) {
+    const d = await this.req('GET', `/rest/v1/profiles?id=eq.${uid}&select=*`);
+    return d[0];
+  },
+  async getBookings(vendorName) {
+    const filter = vendorName ? `&nha_cung_cap=eq.${encodeURIComponent(vendorName)}` : '';
+    return this.req('GET', `/rest/v1/bookings?select=*${filter}&order=stt.asc`);
+  },
+  async insertBookings(rows) {
+    return this.req('POST', '/rest/v1/bookings', rows);
+  },
+  async upsertBooking(row) {
+    return this.req('POST', '/rest/v1/bookings?on_conflict=id', row);
+  },
+  async updateBooking(id, patch) {
+    return this.req('PATCH', `/rest/v1/bookings?id=eq.${id}`, patch);
+  },
+  async deleteBooking(id) {
+    return this.req('DELETE', `/rest/v1/bookings?id=eq.${id}`);
+  },
+  async uploadImage(bookingId, file) {
+    const ext = file.name.split('.').pop();
+    const path = `${bookingId}/${Date.now()}.${ext}`;
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/booking-images/${path}`, {
+      method: 'POST',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + sbSession.access_token, 'Content-Type': file.type },
+      body: file,
+    });
+    if (!r.ok) throw new Error('Lỗi upload ảnh');
+    const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/booking-images/${path}`;
+    await this.req('POST', '/rest/v1/booking_images', { booking_id: bookingId, image_url: publicUrl, uploaded_by: sbSession.user.id });
+    return publicUrl;
+  },
+  async getImages(bookingId) {
+    return this.req('GET', `/rest/v1/booking_images?booking_id=eq.${bookingId}&select=*&order=uploaded_at.asc`);
+  },
+  async deleteImage(imgId) {
+    return this.req('DELETE', `/rest/v1/booking_images?id=eq.${imgId}`);
+  },
+};
+
+// ══ State ══
+let sbSession = null;
+let currentProfile = null;
+let bookings = [];
+let bookingImages = {};
+let editId = null;
+
+// ══ Helpers ══
+function loading(show) {
+  document.getElementById('loading').classList.toggle('show', show);
+}
+
+function showAlert(msg, type, container = 'alert-area') {
+  const el = document.getElementById(container);
+  if (!el) return;
+  el.innerHTML = `<div class="alert alert-${type} show">${msg}</div>`;
+  setTimeout(() => { if (el) el.innerHTML = ''; }, 4000);
+}
+
+function fmtMonth(m) {
+  if (!m) return '';
+  const [y, mon] = m.split('-');
+  return mon ? `T${parseInt(mon)}/${y}` : m;
+}
+
+function normalizeStatus(s) {
+  if (!s) return 'Chưa book';
+  const k = s.toLowerCase().replace(/[-\s]/g, '');
+  if (k.includes('chuabook') || k.includes('chưabook')) return 'Chưa book';
+  if (k.includes('golive') || k.includes('gôlive')) return 'Đã go-live';
+  if (k.includes('dabook') || k.includes('đãbook')) return 'Đã book, chờ go-live';
+  return s;
+}
+
+function colGet(row, ...keys) {
+  for (const k of keys) {
+    for (const rk of Object.keys(row)) {
+      if (rk.toLowerCase().replace(/\s/g, '').includes(k.toLowerCase().replace(/\s/g, ''))) {
+        if (row[rk] !== undefined && row[rk] !== '') return String(row[rk]);
+      }
+    }
+  }
+  return '';
+}
+
+function badgeHtml(status) {
+  if (status === 'Chưa book') return `<span class="badge badge-gray">Chưa book</span>`;
+  if (status === 'Đã book, chờ go-live') return `<span class="badge badge-amber">Đã book / chờ go-live</span>`;
+  if (status === 'Đã go-live') return `<span class="badge badge-green">Đã go-live</span>`;
+  return `<span class="badge badge-gray">${status}</span>`;
+}
+
+// ══ Auth ══
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('auth-error');
+  const btn = document.getElementById('btn-login');
+  errEl.style.display = 'none';
+  if (!email || !pass) { errEl.textContent = 'Vui lòng nhập đầy đủ email và mật khẩu.'; errEl.style.display = 'block'; return; }
+  btn.disabled = true; btn.textContent = 'Đang đăng nhập...';
+  loading(true);
+  try {
+    sbSession = await sb.signIn(email, pass);
+    currentProfile = await sb.getProfile(sbSession.user.id);
+    if (!currentProfile) throw new Error('Tài khoản chưa được cấu hình. Liên hệ admin.');
+    await initApp();
+  } catch (e) {
+    errEl.textContent = e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = 'Đăng nhập';
+    loading(false);
+  }
+}
+
+document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+async function doLogout() {
+  loading(true);
+  await sb.signOut().catch(() => {});
+  sbSession = null; currentProfile = null; bookings = []; bookingImages = {};
+  document.getElementById('app-screen').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  loading(false);
+}
+
+async function initApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-screen').style.display = 'block';
+  const rb = document.getElementById('role-badge');
+  rb.textContent = currentProfile.role === 'admin' ? 'Admin' : 'Nhà cung cấp';
+  rb.className = `role-badge ${currentProfile.role === 'admin' ? 'admin' : 'vendor'}`;
+  document.getElementById('user-name-lbl').textContent = currentProfile.email || sbSession.user.email;
+
+  loading(true);
+  if (currentProfile.role === 'admin') {
+    document.getElementById('admin-view').style.display = 'block';
+    await loadAllBookings();
+    renderAdminTable();
+  } else {
+    document.getElementById('vendor-view').style.display = 'block';
+    await loadVendorBookings();
+    renderVendorView();
+  }
+  loading(false);
+}
+
+// ══ Data ══
+async function loadAllBookings() {
+  bookings = await sb.getBookings();
+  await loadImages();
+  updateStats();
+  populateVendorFilter();
+}
+
+async function loadVendorBookings() {
+  bookings = await sb.getBookings(currentProfile.vendor_name);
+  await loadImages();
+}
+
+async function loadImages() {
+  bookingImages = {};
+  for (const b of bookings) {
+    const imgs = await sb.getImages(b.id);
+    bookingImages[b.id] = imgs;
+  }
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = bookings.length;
+  document.getElementById('s-chua').textContent = bookings.filter(b => b.trang_thai === 'Chưa book').length;
+  document.getElementById('s-book').textContent = bookings.filter(b => b.trang_thai === 'Đã book, chờ go-live').length;
+  document.getElementById('s-live').textContent = bookings.filter(b => b.trang_thai === 'Đã go-live').length;
+}
+
+function populateVendorFilter() {
+  const vendors = [...new Set(bookings.map(b => b.nha_cung_cap).filter(Boolean))];
+  const sel = document.getElementById('f-vendor');
+  sel.innerHTML = '<option value="">Tất cả nhà cung cấp</option>' + vendors.map(v => `<option>${v}</option>`).join('');
+}
+
+// ══ Admin table ══
+function getFiltered() {
+  const month = document.getElementById('f-month')?.value;
+  const status = document.getElementById('f-status')?.value;
+  const vendor = document.getElementById('f-vendor')?.value;
+  const search = document.getElementById('f-search')?.value.toLowerCase();
+  return bookings.filter(b => {
+    if (month && b.thang !== month) return false;
+    if (status && b.trang_thai !== status) return false;
+    if (vendor && b.nha_cung_cap !== vendor) return false;
+    if (search && !JSON.stringify(b).toLowerCase().includes(search)) return false;
+    return true;
+  });
+}
+
+function renderAdminTable() {
+  const filtered = getFiltered();
+  const tbody = document.getElementById('admin-tbody');
+  const empty = document.getElementById('admin-empty');
+  if (!bookings.length) { tbody.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  tbody.innerHTML = filtered.map(b => {
+    const imgs = bookingImages[b.id] || [];
+    const imgHtml = imgs.length
+      ? `<img class="img-thumb" src="${imgs[0].image_url}" onclick="viewImg('${imgs[0].image_url}')" title="${imgs.length} ảnh">`
+      : `<div class="img-placeholder">${imgs.length} ảnh</div>`;
+    return `<tr>
+      <td>${b.stt || ''}</td>
+      <td>${fmtMonth(b.thang)}</td>
+      <td style="white-space:nowrap">${b.phu_trach || '-'}</td>
+      <td style="max-width:160px">${b.hang_muc || '-'}</td>
+      <td style="white-space:nowrap">${b.nha_cung_cap || '-'}</td>
+      <td style="max-width:130px;font-size:12px;color:var(--text-2)">${b.vi_tri || '-'}</td>
+      <td>
+        <select class="status-select" onchange="updateStatus(${b.id}, this.value)">
+          <option ${b.trang_thai === 'Chưa book' ? 'selected' : ''}>Chưa book</option>
+          <option ${b.trang_thai === 'Đã book, chờ go-live' ? 'selected' : ''}>Đã book, chờ go-live</option>
+          <option ${b.trang_thai === 'Đã go-live' ? 'selected' : ''}>Đã go-live</option>
+        </select>
+      </td>
+      <td>${imgHtml}</td>
+      <td style="max-width:120px;font-size:12px;color:var(--text-2)">${b.ghi_chu || ''}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm" onclick="editItem(${b.id})" style="margin-right:4px">Sửa</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteItem(${b.id})">Xoá</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function updateStatus(id, val) {
+  await sb.updateBooking(id, { trang_thai: val });
+  const b = bookings.find(x => x.id === id);
+  if (b) b.trang_thai = val;
+  updateStats();
+  showAlert('Đã cập nhật trạng thái.', 'success');
+}
+
+function clearFilters() {
+  ['f-month', 'f-status', 'f-vendor', 'f-search'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  renderAdminTable();
+}
+
+// ══ Upload Excel ══
+function handleUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('upload-lbl').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = async ev => {
+    loading(true);
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+      const items = rows.map((r, i) => ({
+        stt: parseInt(colGet(r, 'stt', 'số thứ tự', 'no')) || (i + 1),
+        thang: colGet(r, 'tháng', 'thang', 'month'),
+        phu_trach: colGet(r, 'phụ trách', 'phutrach', 'người phụ'),
+        hang_muc: colGet(r, 'hạng mục', 'hangmuc', 'tên hạng', 'booking'),
+        ghi_chu: colGet(r, 'ghi chú', 'ghichu', 'note'),
+        nha_cung_cap: colGet(r, 'nhà cung cấp', 'nhacungcap', 'vendor'),
+        vi_tri: colGet(r, 'vị trí', 'vitri', 'location', 'địa điểm'),
+        trang_thai: normalizeStatus(colGet(r, 'trạng thái', 'trangthai', 'status')),
+      })).filter(r => r.hang_muc || r.nha_cung_cap);
+      if (!items.length) throw new Error('Không đọc được dữ liệu. Kiểm tra lại tên cột trong file.');
+      await sb.insertBookings(items);
+      await loadAllBookings();
+      renderAdminTable();
+      showAlert(`Đã nhập ${items.length} hạng mục từ file.`, 'success');
+    } catch (err) {
+      showAlert(err.message, 'error');
+    } finally {
+      loading(false);
+      e.target.value = '';
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ══ Add/Edit Modal ══
+function openAddModal() {
+  editId = null;
+  document.getElementById('modal-title').textContent = 'Thêm hạng mục booking';
+  ['f-thang', 'f-phutrach', 'f-hangmuc', 'f-ncc', 'f-vitri', 'f-ghichu'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('f-trangthai').value = 'Chưa book';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function editItem(id) {
+  const b = bookings.find(x => x.id === id);
+  if (!b) return;
+  editId = id;
+  document.getElementById('modal-title').textContent = 'Chỉnh sửa hạng mục';
+  document.getElementById('f-thang').value = b.thang || '';
+  document.getElementById('f-phutrach').value = b.phu_trach || '';
+  document.getElementById('f-hangmuc').value = b.hang_muc || '';
+  document.getElementById('f-ncc').value = b.nha_cung_cap || '';
+  document.getElementById('f-vitri').value = b.vi_tri || '';
+  document.getElementById('f-trangthai').value = b.trang_thai || 'Chưa book';
+  document.getElementById('f-ghichu').value = b.ghi_chu || '';
+  document.getElementById('add-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('add-modal').classList.remove('open');
+  editId = null;
+}
+
+async function saveItem() {
+  const hangmuc = document.getElementById('f-hangmuc').value.trim();
+  if (!hangmuc) { alert('Vui lòng nhập tên hạng mục.'); return; }
+  const payload = {
+    stt: editId ? bookings.find(b => b.id === editId)?.stt : bookings.length + 1,
+    thang: document.getElementById('f-thang').value,
+    phu_trach: document.getElementById('f-phutrach').value,
+    hang_muc: hangmuc,
+    nha_cung_cap: document.getElementById('f-ncc').value,
+    vi_tri: document.getElementById('f-vitri').value,
+    trang_thai: document.getElementById('f-trangthai').value,
+    ghi_chu: document.getElementById('f-ghichu').value,
+  };
+  loading(true);
+  try {
+    if (editId) {
+      await sb.updateBooking(editId, payload);
+      Object.assign(bookings.find(b => b.id === editId), payload);
+    } else {
+      const inserted = await sb.insertBookings([payload]);
+      if (inserted?.[0]) bookings.push(inserted[0]);
+    }
+    closeModal();
+    updateStats();
+    populateVendorFilter();
+    renderAdminTable();
+    showAlert(editId ? 'Đã cập nhật hạng mục.' : 'Đã thêm hạng mục mới.', 'success');
+  } catch (err) {
+    showAlert(err.message, 'error');
+  } finally {
+    loading(false);
+  }
+}
+
+async function deleteItem(id) {
+  if (!confirm('Xoá hạng mục này?')) return;
+  loading(true);
+  try {
+    await sb.deleteBooking(id);
+    bookings = bookings.filter(b => b.id !== id);
+    delete bookingImages[id];
+    updateStats();
+    populateVendorFilter();
+    renderAdminTable();
+    showAlert('Đã xoá hạng mục.', 'success');
+  } catch (err) {
+    showAlert(err.message, 'error');
+  } finally {
+    loading(false);
+  }
+}
+
+// ══ Export CSV ══
+function exportCSV() {
+  if (!bookings.length) return;
+  const header = ['STT', 'Tháng', 'Phụ trách', 'Hạng mục', 'Nhà cung cấp', 'Vị trí', 'Trạng thái', 'Ghi chú', 'Số ảnh'];
+  const rows = bookings.map(b => [b.stt, b.thang, b.phu_trach, b.hang_muc, b.nha_cung_cap, b.vi_tri, b.trang_thai, b.ghi_chu, (bookingImages[b.id] || []).length]);
+  const csv = [header, ...rows].map(r => r.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = 'ooh-booking.csv'; a.click();
+}
+
+// ══ Vendor view ══
+function renderVendorView() {
+  const month = document.getElementById('vf-month')?.value;
+  const status = document.getElementById('vf-status')?.value;
+  let items = bookings.filter(b => {
+    if (month && b.thang !== month) return false;
+    if (status && b.trang_thai !== status) return false;
+    return true;
+  });
+  const container = document.getElementById('vendor-items');
+  if (!items.length) {
+    container.innerHTML = '<div class="empty">Không có hạng mục nào trong thời gian đã chọn.</div>';
+    return;
+  }
+  container.innerHTML = items.map(b => {
+    const imgs = bookingImages[b.id] || [];
+    const imgPreviews = imgs.map(img => `
+      <div class="img-del-wrap">
+        <img src="${img.image_url}" class="img-thumb" onclick="viewImg('${img.image_url}')">
+        <span class="img-del" onclick="removeImg(${b.id}, ${img.id}, this)" title="Xoá ảnh">×</span>
+      </div>`).join('');
+    return `<div class="vendor-card">
+      <div class="vendor-card-header">
+        <div>
+          <div class="vendor-card-title">${b.hang_muc}</div>
+          <div class="vendor-card-sub">${b.vi_tri || ''}</div>
+          <div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap">
+            <span style="font-size:11px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text-2)">${fmtMonth(b.thang)}</span>
+            ${b.phu_trach ? `<span style="font-size:11px;padding:2px 8px;background:var(--bg);border:1px solid var(--border);border-radius:12px;color:var(--text-2)">${b.phu_trach}</span>` : ''}
+          </div>
+        </div>
+        ${badgeHtml(b.trang_thai)}
+      </div>
+      ${b.ghi_chu ? `<div style="font-size:12px;color:var(--text-2);background:var(--bg);padding:7px 10px;border-radius:var(--radius-sm);margin-bottom:10px">${b.ghi_chu}</div>` : ''}
+      <div style="border-top:1px solid var(--border);padding-top:10px">
+        <div style="font-size:12px;font-weight:500;color:var(--text-2);margin-bottom:6px">Ảnh báo cáo nghiệm thu (${imgs.length} ảnh)</div>
+        <div class="img-row">
+          ${imgPreviews || '<span style="font-size:12px;color:var(--text-3)">Chưa có ảnh</span>'}
+        </div>
+        <label class="img-upload-label">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Tải ảnh lên
+          <input type="file" multiple accept="image/*" onchange="uploadVendorImages(event, ${b.id})">
+        </label>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function uploadVendorImages(e, bookingId) {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  loading(true);
+  try {
+    for (const f of files) {
+      const url = await sb.uploadImage(bookingId, f);
+      if (!bookingImages[bookingId]) bookingImages[bookingId] = [];
+      bookingImages[bookingId].push({ image_url: url, id: Date.now() + Math.random() });
+    }
+    const b = bookings.find(x => x.id === bookingId);
+    if (b && b.trang_thai === 'Đã book, chờ go-live') {
+      await sb.updateBooking(bookingId, { trang_thai: 'Đã go-live' });
+      b.trang_thai = 'Đã go-live';
+      showAlert('Đã tải ảnh và tự động cập nhật trạng thái sang Đã go-live!', 'success', 'vendor-alert');
+    } else {
+      showAlert(`Đã tải ${files.length} ảnh thành công.`, 'success', 'vendor-alert');
+    }
+    renderVendorView();
+  } catch (err) {
+    showAlert(err.message, 'error', 'vendor-alert');
+  } finally {
+    loading(false);
+    e.target.value = '';
+  }
+}
+
+async function removeImg(bookingId, imgId, el) {
+  loading(true);
+  try {
+    await sb.deleteImage(imgId);
+    bookingImages[bookingId] = (bookingImages[bookingId] || []).filter(i => i.id !== imgId);
+    renderVendorView();
+  } catch (err) {
+    showAlert(err.message, 'error', 'vendor-alert');
+  } finally {
+    loading(false);
+  }
+}
+
+function viewImg(src) {
+  document.getElementById('img-modal-src').src = src;
+  document.getElementById('img-modal').classList.add('open');
+}
+</script>
+</body>
+</html>
