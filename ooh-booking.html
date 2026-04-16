@@ -643,8 +643,8 @@
 </div>
 
 <!-- IMAGE VIEWER -->
-<div class="img-modal" id="img-modal" onclick="this.classList.remove('open')">
-  <img id="img-modal-src" src="">
+<div id="img-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:9999;align-items:center;justify-content:center;cursor:zoom-out" onclick="closeImgModal()">
+  <img id="img-modal-src" src="" style="max-width:90vw;max-height:85vh;border-radius:8px;display:block">
 </div>
 
 <script>
@@ -902,8 +902,8 @@ function renderAdminTable() {
   tbody.innerHTML = filtered.map(b => {
     const imgs = bookingImages[b.id] || [];
     const imgHtml = imgs.length
-      ? `<img class="img-thumb" src="${imgs[0].image_url}" onclick="viewImg('${imgs[0].image_url}')" title="${imgs.length} ảnh">`
-      : `<div class="img-placeholder">${imgs.length} ảnh</div>`;
+      ? `<div style="display:flex;gap:4px;flex-wrap:wrap;max-width:200px">${imgs.map(img => `<img class="img-thumb" src="${img.image_url}" onclick="viewImg('${img.image_url}')" title="Xem ảnh">`).join('')}</div>`
+      : `<div class="img-placeholder">0 ảnh</div>`;
     return `<tr>
       <td>${b.stt || ''}</td>
       <td>${fmtMonth(b.thang)}</td>
@@ -1163,8 +1163,14 @@ async function removeImg(bookingId, imgId, el) {
 }
 
 function viewImg(src) {
+  const modal = document.getElementById('img-modal');
   document.getElementById('img-modal-src').src = src;
-  document.getElementById('img-modal').classList.add('open');
+  modal.style.display = 'flex';
+}
+
+function closeImgModal() {
+  document.getElementById('img-modal').style.display = 'none';
+  document.getElementById('img-modal-src').src = '';
 }
 </script>
 </body>
