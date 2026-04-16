@@ -852,9 +852,16 @@ async function loadVendorBookings() {
 
 async function loadImages() {
   bookingImages = {};
-  for (const b of bookings) {
-    const imgs = await sb.getImages(b.id);
-    bookingImages[b.id] = imgs;
+  if (!bookings.length) return;
+  const ids = bookings.map(b => b.id).join(',');
+  try {
+    const imgs = await sb.req('GET', `/rest/v1/booking_images?booking_id=in.(${ids})&select=*&order=uploaded_at.asc`);
+    for (const img of imgs) {
+      if (!bookingImages[img.booking_id]) bookingImages[img.booking_id] = [];
+      bookingImages[img.booking_id].push(img);
+    }
+  } catch(e) {
+    console.warn('loadImages error:', e);
   }
 }
 
